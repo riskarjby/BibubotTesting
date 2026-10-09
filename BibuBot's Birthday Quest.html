@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>BibuBot's Birthday Quest</title>
+<style>
+:root{--navy:#0b1d3a;--sky:#12305f;--cyan:#7fdbff;--white:#fff;--pink:#ff8fb8;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--navy);color:var(--white);font-family:ui-monospace,Menlo,Consolas,monospace;-webkit-tap-highlight-color:transparent}
+.scr{display:none;max-width:820px;margin:0 auto;padding:14px;text-align:center;min-height:100vh;flex-direction:column;align-items:center;justify-content:center;gap:12px}
+.scr.on{display:flex}
+h1{font-size:clamp(20px,5vw,34px);margin:0;color:var(--cyan);text-shadow:3px 3px 0 #000}
+h2{margin:0;color:var(--pink)}
+.sub{opacity:.85;margin:0}
+.panel{border:4px solid var(--white);background:var(--sky);padding:14px;box-shadow:6px 6px 0 #000;width:100%;max-width:560px;text-align:left;line-height:1.55}
+.bubble{border:4px solid var(--white);background:var(--white);color:var(--navy);padding:12px;max-width:520px;font-weight:bold;line-height:1.5;position:relative}
+button{font:inherit;font-weight:bold;background:var(--cyan);color:var(--navy);border:4px solid var(--white);padding:10px 16px;cursor:pointer;box-shadow:4px 4px 0 #000;touch-action:manipulation}
+button:active{transform:translate(3px,3px);box-shadow:1px 1px 0 #000}
+button:disabled{opacity:.4;cursor:not-allowed}
+button.pk{background:var(--pink)}
+canvas{image-rendering:pixelated}
+canvas.bot{width:192px;height:192px}
+.row{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.bars{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;font-size:12px}
+.bar{width:90px;height:10px;border:2px solid #fff;background:#000;display:inline-block;vertical-align:middle}
+.bar i{display:block;height:100%;background:var(--cyan)}
+#hud{display:flex;justify-content:space-between;align-items:center;width:100%;gap:8px;flex-wrap:wrap;font-size:14px}
+#hud button{padding:6px 10px;font-size:12px}
+#game{width:100%;max-width:800px;height:auto;border:4px solid #fff;background:var(--sky);touch-action:none}
+#touch{display:none;width:100%;max-width:800px;justify-content:space-between;gap:10px}
+#touch button{flex:1;height:68px;font-size:26px;user-select:none;-webkit-user-select:none}
+@media (pointer:coarse){#touch{display:flex}}
+.cf{position:fixed;top:-20px;font-size:20px;pointer-events:none;animation:fall 2.2s linear forwards;z-index:9}
+@keyframes fall{to{transform:translateY(110vh) rotate(360deg);opacity:.2}}
+.fl{position:absolute;pointer-events:none;font-size:22px;animation:up 1.4s ease-out forwards;z-index:9}
+@keyframes up{to{transform:translateY(-90px);opacity:0}}
+#secret{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);align-items:center;justify-content:center;padding:16px;z-index:20}
+#secret.on{display:flex}
+.letter p{margin:0 0 10px}
+#top{position:fixed;top:6px;right:6px;z-index:30;padding:4px 8px;font-size:11px}
+</style></head><body>
+<button id="top">SOUND: ON</button>
+
+<section class="scr on" id="s-welcome">
+<h1>BIBUBOT'S BIRTHDAY QUEST</h1><p class="sub">A tiny adventure, made just for you.</p>
+<canvas class="bot" width="128" height="128"></canvas>
+<div class="bubble" id="t-welcome"></div>
+<div class="row"><button id="b-start">LET'S START</button><button id="b-skip" class="pk" style="display:none">OPEN GIFT AGAIN</button></div>
+</section>
+
+<section class="scr" id="s-prep">
+<h2>MISSION</h2>
+<canvas class="bot" width="128" height="128"></canvas>
+<div class="bubble" id="t-prep"></div>
+<div class="panel">
+<b>MOVE</b> — panah kiri/kanan atau A/D<br><b>JUMP</b> — Space atau panah atas<br><b>REACH THE GIFT</b> — capai gerbang finis
+</div>
+<div class="bars"><span>HAPPINESS <span class="bar"><i id="v-hap"></i></span></span><span>ENERGY <span class="bar"><i id="v-ene"></i></span></span><span>HUNGER <span class="bar"><i id="v-hun"></i></span></span></div>
+<div class="row"><button data-a="pet">PET</button><button data-a="feed">FEED</button><button data-a="play">PLAY</button><button data-a="sleep">SLEEP</button><button data-a="hug">HUG</button></div>
+<button id="b-adv" class="pk">START ADVENTURE</button>
+</section>
+
+<section class="scr" id="s-game">
+<div id="hud"><span id="prog">LEVEL PROGRESS: 0%</span><span class="row"><button id="b-pause">PAUSE</button><button id="b-restart">RESTART LEVEL</button></span></div>
+<canvas id="game" width="800" height="400"></canvas>
+<div id="touch"><button id="tl">◀</button><button id="tj" class="pk">▲</button><button id="tr">▶</button></div>
+</section>
+
+<section class="scr" id="s-win">
+<h1>LEVEL COMPLETE!</h1><h2>YOU DID IT, IRFAN!</h2>
+<canvas class="bot" width="128" height="128"></canvas>
+<div class="bubble" id="t-win"></div>
+<button id="b-claim" class="pk" disabled>CLAIM YOUR GIFT</button>
+</section>
+
+<section class="scr" id="s-gift">
+<canvas class="bot" width="128" height="128" style="width:120px;height:120px"></canvas>
+<div class="bubble" id="t-gift"></div>
+<canvas id="giftc" width="160" height="160" style="width:240px;height:240px;cursor:pointer"></canvas>
+<b id="gifthint">CLICK THE GIFT TO OPEN</b>
+</section>
+
+<section class="scr" id="s-letter">
+<div class="panel letter" id="letter"></div>
+<div class="row"><button id="b-secret" class="pk">READ MY SECRET MESSAGE</button><button id="b-again">PLAY AGAIN</button></div>
+</section>
+
+<div id="secret"><div class="panel"><h2>💌 Secret Message</h2><p id="secret-t"></p><button id="b-close">BACK TO LETTER</button></div></div>
+
+<script>
+/* ===================== KONFIGURASI (edit di sini) ===================== */
+const CONFIG = {
+  botName: "BibuBot", to: "Irfan", from: "Riska", nick: "Bibuy",
+  colors: { navy:"#0b1d3a", sky:"#12305f", cyan:"#7fdbff", white:"#ffffff", pink:"#ff8fb8" },
+  lines: {
+    welcome: "Hai, Irfan! Aku BibuBot. Ada hadiah spesial yang menunggumu di ujung petualangan ini. Mau menemaniku mengambilnya?",
+    prep: "Hai, Irfan! Hadiahmu sudah menunggu di ujung perjalanan. Bantu aku mencapai garis finis, yuk!",
+    win: "Yeay! Kita berhasil! Sekarang ada sesuatu yang sudah disiapkan khusus buat kamu.",
+    gift: "Kamu berhasil sampai di sini! Ada sesuatu dari Riska yang menunggumu di dalam kotak ini.",
+    pet: "Hehe, geli! ♡", feed: "Nyam nyam! Enak!", play: "Wiii! Ayo main!", sleep: "Zzz... zzz...", hug: "Peluk dari BibuBot untukmu! 🤍"
+  },
+  letterTitle: "Happy Birthday, Irfan! 🤍",
+  letter: [
+    "Selamat bertambah usia untuk seseorang yang begitu berarti bagiku.",
+    "Aku membuat petualangan kecil ini khusus untukmu. Mungkin sederhana, tetapi di setiap bagian kecilnya ada waktu, usaha, doa, dan harapan baik yang ingin kusampaikan.",
+    "Terima kasih sudah hadir dan menjadi bagian dari hari-hariku. Semoga di usia barumu, kamu selalu diberi kesehatan, ketenangan, kebahagiaan, dan kemudahan dalam setiap langkahmu.",
+    "Semoga hal-hal baik selalu menemukan jalan menuju kamu. Dan semoga kamu selalu punya alasan untuk tersenyum, bahkan pada hari-hari yang terasa berat.",
+    "Sekali lagi, happy birthday, Bibuy. Semoga kamu menyukai hadiah kecil dari Riska ini. 💗"
+  ],
+  signature: "With love, Riska ♡",
+  secret: "Ini mungkin cuma hadiah kecil di layar, tapi aku membuatnya dengan banyak doa dan harapan baik untukmu. Semoga kamu selalu punya alasan untuk tersenyum, Bibuy. ♡",
+  /* Level & kesulitan: ubah angka untuk membuat lebih mudah/sulit */
+  level: {
+    speed: 220, jump: 540, gravity: 1500,        // fisika
+    width: 3100, finishX: 2960, checkpointX: 1560,
+    ground: [[0,700],[790,1500],[1590,2300],[2390,3100]],   // [mulaiX, akhirX] (celah = jurang kecil)
+    platforms: [[400,260,100],[1000,270,120],[1900,260,120]], // [x, y, lebar]
+    spikes: [1200, 2000],                                      // maksimal 2 rintangan
+    hearts: [[420,220],[1030,230],[1250,250],[1930,220],[2150,280],[2600,290]]
+  }
+};
+/* ===================== UTIL ===================== */
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const C=CONFIG.colors, L=CONFIG.level;
+let save={done:false,letter:false,secret:false,sound:true};
+try{Object.assign(save,JSON.parse(localStorage.getItem("bibubot")||"{}"))}catch(e){}
+function store(){try{localStorage.setItem("bibubot",JSON.stringify(save))}catch(e){}}
+let current="welcome";
+function go(id){current=id;$$(".scr").forEach(s=>s.classList.toggle("on",s.id==="s-"+id))}
+function burst(chars,n){for(let i=0;i<n;i++){const e=document.createElement("span");e.className="cf";e.textContent=chars[i%chars.length];e.style.left=Math.random()*100+"vw";e.style.animationDelay=Math.random()*.8+"s";document.body.appendChild(e);setTimeout(()=>e.remove(),3200)}}
+function floatHeart(btn,ch){const e=document.createElement("span");e.className="fl";e.textContent=ch||"💗";const r=btn.getBoundingClientRect();e.style.left=(r.left+r.width/2+scrollX)+"px";e.style.top=(r.top+scrollY)+"px";document.body.appendChild(e);setTimeout(()=>e.remove(),1500)}
+/* ===================== AUDIO (Web Audio, lokal) ===================== */
+let ac=null,musicTimer=null,step=0;
+function beep(f,d,type){if(!save.sound)return;try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();const o=ac.createOscillator(),g=ac.createGain();o.type=type||"square";o.frequency.value=f;g.gain.value=.04;o.connect(g);g.connect(ac.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+d);o.stop(ac.currentTime+d)}catch(e){}}
+function musicOn(){if(musicTimer||!save.sound)return;const n=[523,659,784,659,587,698,880,698];musicTimer=setInterval(()=>{beep(n[step++%8],.18,"triangle")},260)}
+function musicOff(){clearInterval(musicTimer);musicTimer=null}
+function updSound(){$("#top").textContent="SOUND: "+(save.sound?"ON":"OFF")}
+$("#top").onclick=()=>{save.sound=!save.sound;store();updSound();save.sound?musicOn():musicOff()};
+addEventListener("pointerdown",()=>{if(save.sound)musicOn()},{once:true});
+updSound();
+/* ===================== BIBUBOT SPRITE ===================== */
+// mode: idle | happy | hug | sleep | celebrate | eat
+function drawBot(g,x,y,s,mode,t){
+  let off=Math.sin(t/300)*0.4;
+  if(mode==="happy"||mode==="celebrate")off=-Math.abs(Math.sin(t/180))*2.5;
+  const r=(a,b,w,h,c)=>{g.fillStyle=c;g.fillRect(x+a*s,y+(b+off)*s,w*s,h*s)};
+  r(7,0,2,2,C.pink);r(7.5,2,1,1,C.navy);
+  r(2,2.5,12,8,C.navy);r(3,3.5,10,6,C.white);
+  if(mode==="sleep"){r(5,6.5,2,1,C.navy);r(9,6.5,2,1,C.navy)}
+  else if(mode==="happy"||mode==="celebrate"||mode==="hug"){r(5,6,1,1,C.navy);r(6,5,1,1,C.navy);r(9,5,1,1,C.navy);r(10,6,1,1,C.navy)}
+  else{r(5,4.5,2,3,C.navy);r(9,4.5,2,3,C.navy);r(5,4.5,1,1,C.white);r(9,4.5,1,1,C.white)}
+  r(3.5,7.5,1.5,1,C.pink);r(11,7.5,1.5,1,C.pink);
+  r(7,8.5,2,1,mode==="eat"?C.navy:C.pink);
+  r(4,10.5,8,4,C.navy);r(5,11.5,6,2,C.cyan);r(7,11.5,2,1.5,C.pink);
+  if(mode==="hug"||mode==="celebrate"){r(0,8.5,3,2,C.navy);r(13,8.5,3,2,C.navy)}else{r(2,11.5,2,2,C.navy);r(12,11.5,2,2,C.navy)}
+  r(5,14.5,2,1.5,C.navy);r(9,14.5,2,1.5,C.navy);
+  if(mode==="sleep"){g.fillStyle=C.white;g.font=(s*3)+"px monospace";g.fillText("Zzz",x+11*s,y+3*s+Math.sin(t/400)*s)}
+}
+let bm="idle",bu=0;
+function setMode(m,ms){bm=m;bu=performance.now()+ms}
+/* ===================== VIRTUAL PET ===================== */
+const pet={hap:60,ene:80,hun:30};
+const cl=v=>Math.max(0,Math.min(100,v));
+function updBars(){$("#v-hap").style.width=pet.hap+"%";$("#v-ene").style.width=pet.ene+"%";$("#v-hun").style.width=(100-pet.hun)+"%"}
+$$("[data-a]").forEach(b=>b.onclick=()=>{
+  const a=b.dataset.a;
+  if(a==="pet"){pet.hap+=10;setMode("happy",1500);floatHeart(b);beep(880,.1)}
+  if(a==="feed"){pet.hun-=25;pet.ene+=5;setMode("eat",1500);beep(300,.1);floatHeart(b,"🍙")}
+  if(a==="play"){pet.hap+=10;pet.ene-=10;pet.hun+=5;setMode("happy",1800);beep(660,.12)}
+  if(a==="sleep"){pet.ene+=30;setMode("sleep",3500);beep(200,.2)}
+  if(a==="hug"){pet.hap+=15;setMode("hug",2200);floatHeart(b);beep(740,.15)}
+  pet.hap=cl(pet.hap);pet.ene=cl(pet.ene);pet.hun=cl(pet.hun);updBars();
+  $("#t-prep").textContent=CONFIG.lines[a];
+});
+/* ===================== GAME ===================== */
+const cv=$("#game"),g=cv.getContext("2d");
+const G={state:"idle",p:null,cam:0,hearts:[],got:0,last:0};
+const keys={l:0,r:0,j:0}, touch={l:0,r:0,j:0};
+const solids=[...L.ground.map(([a,b])=>({x:a,y:340,w:b-a,h:60})),...L.platforms.map(([x,y,w])=>({x,y,w,h:16}))];
+const spikes=L.spikes.map(x=>({x,y:320,w:30,h:20}));
+function resetGame(){
+  G.p={x:60,y:300,w:24,h:30,vx:0,vy:0,ground:false,coy:0,face:1,cx:60,cy:300};
+  G.hearts=L.hearts.map(h=>({x:h[0],y:h[1],got:false}));G.got=0;G.cam=0;G.state="play";G.checkX=60;
+  $("#b-pause").textContent="PAUSE";
+}
+function respawn(){const p=G.p;p.x=G.checkX;p.y=300;p.vx=p.vy=0;beep(150,.2,"sawtooth")}
+const hit=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
+function update(dt){
+  const p=G.p, dir=((keys.r||touch.r)?1:0)-((keys.l||touch.l)?1:0), jmp=keys.j||touch.j;
+  p.vx=dir*L.speed; if(dir)p.face=dir;
+  p.vy=Math.min(p.vy+L.gravity*dt,900);
+  p.coy-=dt; if(p.ground)p.coy=.1;          // coyote time: lompat sedikit setelah meninggalkan tepi
+  if(jmp&&p.coy>0){p.vy=-L.jump;p.coy=0;p.ground=false;beep(520,.1)}
+  if(!jmp&&p.vy<-200)p.vy*=.9;               // lompat pendek jika tombol dilepas
+  // gerak sumbu X lalu resolusi tabrakan
+  p.x=Math.max(0,p.x+p.vx*dt);
+  for(const s of solids)if(hit(p,s)){p.x=p.vx>0?s.x-p.w:s.x+s.w}
+  // gerak sumbu Y lalu resolusi tabrakan
+  p.y+=p.vy*dt;p.ground=false;
+  for(const s of solids)if(hit(p,s)){if(p.vy>0){p.y=s.y-p.h;p.ground=true}else p.y=s.y+s.h;p.vy=0}
+  if(p.y>470)respawn();                       // jatuh ke jurang
+  for(const s of spikes)if(hit({x:p.x+4,y:p.y+6,w:p.w-8,h:p.h-6},s))respawn();
+  if(p.x>L.checkpointX&&G.checkX<L.checkpointX)G.checkX=L.checkpointX;
+  for(const h of G.hearts)if(!h.got&&Math.abs(h.x-p.x-12)<24&&Math.abs(h.y-p.y-15)<28){h.got=true;G.got++;beep(990,.1)}
+  G.cam=Math.max(0,Math.min(L.width-800,p.x-300));
+  const pct=Math.round(Math.min(1,p.x/L.finishX)*100);$("#prog").textContent="LEVEL PROGRESS: "+pct+"%";
+  if(p.x>=L.finishX)win();
+}
+function win(){
+  G.state="won";$("#prog").textContent="LEVEL PROGRESS: 100%";
+  burst(["💗","✦","■","♡"],40);[660,784,988,1318].forEach((f,i)=>setTimeout(()=>beep(f,.2),i*140));
+  setMode("celebrate",4000);
+  setTimeout(()=>{if(G.state==="won"){$("#t-win").textContent=CONFIG.lines.win;$("#b-claim").disabled=false;go("win")}},1600);
+}
+const stars=Array.from({length:30},(_,i)=>[(i*97)%800,(i*53)%200,i%3+1]);
+function draw(t){
+  g.fillStyle=C.sky;g.fillRect(0,0,800,400);
+  g.fillStyle=C.white;stars.forEach(s=>g.fillRect(s[0],s[1],s[2],s[2]));
+  g.fillStyle="#1c4585"; // awan pixel (parallax)
+  for(let i=0;i<8;i++){const x=((i*330-G.cam*.4)%2640+2640)%2640-200,y=50+(i%3)*45;g.fillRect(x,y,90,16);g.fillRect(x+16,y-12,50,12)}
+  g.save();g.translate(-Math.round(G.cam),0);
+  for(const s of solids){
+    g.fillStyle=C.navy;g.fillRect(s.x,s.y,s.w,s.h);g.fillStyle=C.cyan;g.fillRect(s.x,s.y,s.w,6);
+    if(s.h>20){g.fillStyle="#17305c";for(let x=s.x;x<s.x+s.w;x+=32)g.fillRect(x,s.y+20,16,8)}
+  }
+  g.fillStyle=C.white;for(const k of spikes)for(let i=0;i<3;i++){const x=k.x+i*10;g.fillRect(x+4,k.y,2,20);g.fillRect(x+2,k.y+6,6,14);g.fillRect(x,k.y+12,10,8)}
+  // checkpoint (bendera)
+  g.fillStyle=C.white;g.fillRect(L.checkpointX,260,4,80);g.fillStyle=G.checkX>=L.checkpointX?C.pink:C.cyan;g.fillRect(L.checkpointX+4,260,24,16);
+  // hati collectible
+  for(const h of G.hearts)if(!h.got){const y=h.y+Math.sin(t/300+h.x)*3;g.fillStyle=C.pink;g.fillRect(h.x,y,6,6);g.fillRect(h.x+10,y,6,6);g.fillRect(h.x-2,y+4,20,6);g.fillRect(h.x+2,y+10,12,4);g.fillRect(h.x+6,y+14,4,3)}
+  // gerbang finis + hadiah
+  const f=L.finishX;g.fillStyle=C.white;g.fillRect(f,240,8,100);g.fillRect(f+60,240,8,100);g.fillRect(f,240,68,8);
+  for(let i=0;i<4;i++){g.fillStyle=i%2?C.navy:C.cyan;g.fillRect(f+8+i*13,248,13,8)}
+  g.fillStyle=C.cyan;g.fillRect(f+90,310,30,30);g.fillStyle=C.white;g.fillRect(f+102,310,6,30);g.fillStyle=C.pink;g.fillRect(f+90,320,30,6);g.fillRect(f+98,302,14,8);
+  const p=G.p;
+  const mode=G.state==="won"?"celebrate":(!p.ground?"happy":"idle");
+  drawBot(g,p.x-4,p.y-2,2,mode,t);
+  g.restore();
+  if(G.state==="pause"){g.fillStyle="rgba(11,29,58,.7)";g.fillRect(0,0,800,400);g.fillStyle=C.white;g.font="bold 36px monospace";g.textAlign="center";g.fillText("PAUSED",400,205);g.textAlign="left"}
+  g.fillStyle=C.pink;g.font="bold 16px monospace";g.fillText("♥ "+G.got+"/"+L.hearts.length,12,24);
+}
+function togglePause(){
+  if(G.state==="play"){G.state="pause";$("#b-pause").textContent="RESUME"}
+  else if(G.state==="pause"){G.state="play";$("#b-pause").textContent="PAUSE"}
+}
+function startGame(){resetGame();clearInputs();go("game")}
+function clearInputs(){keys.l=keys.r=keys.j=0;touch.l=touch.r=touch.j=0}
+/* ===================== INPUT ===================== */
+const map={ArrowLeft:"l",a:"l",A:"l",ArrowRight:"r",d:"r",D:"r"," ":"j",ArrowUp:"j",w:"j",W:"j"};
+addEventListener("keydown",e=>{
+  if(current!=="game")return;
+  if(map[e.key]!==undefined||e.key==="Escape"){e.preventDefault()}
+  if(e.key==="Escape"&&!e.repeat)return togglePause();
+  if(map[e.key])keys[map[e.key]]=1;
+});
+addEventListener("keyup",e=>{if(map[e.key])keys[map[e.key]]=0});
+addEventListener("blur",clearInputs);
+document.addEventListener("visibilitychange",()=>{if(document.hidden){clearInputs();if(G.state==="play")togglePause()}});
+[["#tl","l"],["#tr","r"],["#tj","j"]].forEach(([id,k])=>{
+  const b=$(id);
+  b.addEventListener("pointerdown",e=>{e.preventDefault();touch[k]=1});
+  ["pointerup","pointerleave","pointercancel"].forEach(ev=>b.addEventListener(ev,()=>touch[k]=0));
+  b.addEventListener("contextmenu",e=>e.preventDefault());
+});
+/* ===================== LOOP (requestAnimationFrame, dt stabil) ===================== */
+const bots=$$("canvas.bot").map(c=>({c,g:c.getContext("2d")}));
+const gc=$("#giftc"),gg=gc.getContext("2d");let giftOpen=0,giftT=0;
+function drawGift(t){
+  gg.clearRect(0,0,160,160);const s=8;
+  const r=(a,b,w,h,c)=>{gg.fillStyle=c;gg.fillRect(a*s,b*s,w*s,h*s)};
+  const wob=giftOpen?0:Math.sin(t/200)*.3, lift=giftOpen?Math.min((t-giftT)/400,1)*5:0;
+  gg.save();gg.translate(wob*s,0);
+  r(3,10,14,9,C.navy);r(4,11,12,7,C.cyan);r(9,10,2,9,C.white);r(4,14,12,1,C.pink);
+  r(2,7-lift,16,3,C.navy);r(3,8-lift,14,1,C.white);r(9,7-lift,2,3,C.pink);
+  r(7,5-lift,3,2,C.pink);r(10,5-lift,3,2,C.pink);
+  gg.restore();
+}
+function loop(now){
+  const t=now;if(!G.last)G.last=now;
+  const dt=Math.min((now-G.last)/1000,1/30);G.last=now;
+  if(bm!=="idle"&&bm!=="sleepx"&&now>bu)bm="idle";
+  if(current==="game"){if(G.state==="play")update(dt);draw(t)}
+  else bots.forEach(({c,g:x})=>{if(c.offsetParent){x.clearRect(0,0,128,128);drawBot(x,0,0,8,current==="win"?"celebrate":bm,t)}});
+  if(current==="gift")drawGift(t);
+  requestAnimationFrame(loop);
+}
+/* ===================== ALUR HALAMAN ===================== */
+$("#t-welcome").textContent=CONFIG.lines.welcome;
+$("#t-prep").textContent=CONFIG.lines.prep;
+$("#b-skip").style.display=save.done?"":"none";
+$("#b-start").onclick=()=>{beep(660,.1);go("prep");updBars()};
+$("#b-adv").onclick=()=>{beep(784,.1);startGame()};
+$("#b-pause").onclick=togglePause;
+$("#b-restart").onclick=()=>{resetGame();clearInputs()};
+$("#b-claim").onclick=()=>{
+  if(G.state!=="won")return;               // hanya bisa setelah menang dari gameplay
+  save.done=true;store();$("#t-gift").textContent=CONFIG.lines.gift;
+  $("#gifthint").style.visibility="visible";giftOpen=0;go("gift");setMode("happy",2000);
+};
+$("#b-skip").onclick=()=>{G.state="won";$("#b-claim").disabled=false;$("#b-claim").click()};
+gc.onclick=()=>{
+  if(giftOpen)return;giftOpen=1;giftT=performance.now();$("#gifthint").style.visibility="hidden";
+  beep(880,.15);burst(["💗","♡","■","✦"],40);
+  setTimeout(()=>{renderLetter();go("letter")},1800);
+};
+function renderLetter(){
+  const box=$("#letter");box.innerHTML="";
+  const h=document.createElement("h2");h.textContent=CONFIG.letterTitle;box.appendChild(h);
+  CONFIG.letter.forEach(t=>{const p=document.createElement("p");p.textContent=t;box.appendChild(p)});
+  const s=document.createElement("p");s.style.cssText="text-align:right;color:var(--pink);font-weight:bold";s.textContent=CONFIG.signature;box.appendChild(s);
+  save.letter=true;store();
+}
+$("#b-secret").onclick=()=>{$("#secret-t").textContent=CONFIG.secret;$("#secret").classList.add("on");save.secret=true;store();beep(700,.12)};
+$("#b-close").onclick=()=>$("#secret").classList.remove("on");
+$("#b-again").onclick=()=>{G.state="idle";$("#b-claim").disabled=true;$("#secret").classList.remove("on");go("welcome")};
+requestAnimationFrame(loop);
+</script></body></html>
